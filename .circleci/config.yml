@@ -1,0 +1,47 @@
+version: 2.1
+
+references:
+  ci_image: &ci_image
+    image: quay.io/reactiveops/ci-images:v11.9-buster
+
+jobs:
+  docker-build:
+    parameters:
+      alpine_version:
+        type: string
+      docker_engine_version:
+        type: string
+    docker:
+      - *ci_image
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: << parameters.docker_engine_version >>
+      - run:
+          name: Build a docker image
+          command: |
+            docker build . \
+              -t "nodejs-rdkafka-alpine-<< parameters.alpine_version >>-docker-<< parameters.docker_engine_version >>" \
+              --build-arg NODEJS_VERSION=lts \
+              --build-arg ALPINE_VERSION=<< parameters.alpine_version >>
+
+workflows:
+  build:
+    jobs:
+      # NodeJS RDKafka
+      - docker-build:
+          name: alpine-3.13-docker-2.10.2
+          alpine_version: "3.13"
+          docker_engine_version: "20.10.2"
+      - docker-build:
+          name: alpine-3.14-docker-2.10.2
+          alpine_version: "3.14"
+          docker_engine_version: "20.10.2"
+      - docker-build:
+          name: alpine-3.13-docker-2.10.6
+          alpine_version: "3.13"
+          docker_engine_version: "20.10.6"
+      - docker-build:
+          name: alpine-3.14-docker-2.10.6
+          alpine_version: "3.14"
+          docker_engine_version: "20.10.6"
